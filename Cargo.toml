@@ -1,0 +1,19 @@
+[package]
+name = "notification-service"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = { version ="0.7.4", features = ["macros"] }
+tokio = {version = "1.0", features = ["full"]}
+sqlx = { version = "0.7.3", features = ["postgres", "runtime-tokio-rustls", "json"] }
+dotenv = "0.15.0"
+serde = { version = "1.0.195", features = ["derive"] }
+serde_json = "1.0.113"
+tower-http = { version = "0.5.1", features = ["trace"] }
+tower-cookies = "0.10.0"
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"]}
+anyhow = "1.0.79"
