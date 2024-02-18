@@ -9,11 +9,12 @@ use crate::errors::CustomError;
 use crate::models::message::{Message, NewMessage, UpdateMessage};
 
 pub async fn all_messages(Extension(pool): Extension<PgPool>) -> impl IntoResponse {
-    let sql = "SELECT * FROM message ".to_string();
+    let sql = "SELECT * FROM message ";
 
     let task = sqlx::query_as::<_, Message>(&sql)
         .fetch_all(&pool)
         .await
+        .map_err(|_| CustomError::BadRequest)
         .unwrap();
 
     (StatusCode::OK, Json(task))
@@ -56,7 +57,8 @@ pub async fn update_message(
         .bind(&message.content)
         .bind(id)
         .execute(&pool)
-        .await;
+        .await
+        .map_err(|_| CustomError::BadRequest)?;
 
     Ok((StatusCode::OK, Json(message)))
 }

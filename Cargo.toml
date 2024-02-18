@@ -17,3 +17,5 @@ tower-cookies = "0.10.0"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"]}
 anyhow = "1.0.79"
+bcrypt = "0.15.0"
+jsonwebtoken = "9.2.0"

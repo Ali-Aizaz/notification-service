@@ -5,6 +5,7 @@ use axum::{
 
 use anyhow::Context;
 use controllers::message::{all_messages, new_message, update_message};
+use controllers::user::{login, new_user};
 use sqlx::postgres::PgPoolOptions;
 use std::fs;
 use tower_http::trace::TraceLayer;
@@ -19,7 +20,7 @@ async fn main() -> anyhow::Result<()> {
     let env = fs::read_to_string(".env").unwrap();
     let (key, database_url) = env.split_once('=').unwrap();
 
-    assert_eq!(key, "DATABASE_URL");
+    assert_eq!(key, "CONNECTION_STRING");
 
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
@@ -35,10 +36,14 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("could not connect to database_url")?;
 
+    // sqlx::migrate!("./migrations").run(&pool).await?;
+
     let app = Router::new()
         .route("/hello", get(root))
         .route("/messages", get(all_messages))
         .route("/messages", post(new_message))
+        .route("/user", post(new_user))
+        .route("/auth/login", post(login))
         .route("/messages/:id", put(update_message))
         .layer(Extension(pool))
         .layer(TraceLayer::new_for_http());
