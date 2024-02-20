@@ -1,6 +1,5 @@
 use crate::controllers::AUTH_TOKEN;
-use crate::ctx::Ctx;
-use crate::models::message::Claims;
+use crate::ctx::{Ctx, Claims};
 use crate::{CustomError, Result};
 use axum::body::Body;
 use axum::http::{HeaderMap, HeaderValue, Request};

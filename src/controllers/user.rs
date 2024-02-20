@@ -1,5 +1,6 @@
 use crate::controllers::AUTH_TOKEN;
-use crate::models::message::{Claims, LoginUser, NewUser, User};
+use crate::ctx::Claims;
+use crate::models::message::{LoginUser, NewUser, User};
 use crate::{CustomError, Result};
 use axum::body::Body;
 use axum::http::{HeaderValue, StatusCode};
@@ -10,7 +11,7 @@ use chrono::Utc;
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 use sqlx::PgPool;
 
-use super::JWT_SECRET;
+use super::{BEARER, JWT_SECRET};
 
 pub async fn signup(
     Extension(pool): Extension<PgPool>,
@@ -44,7 +45,7 @@ pub async fn signup(
         .status(StatusCode::CREATED)
         .header(
             AUTH_TOKEN,
-            HeaderValue::from_str(&format!("Bearer {}", token)).unwrap(),
+            HeaderValue::from_str(&format!("{}{}", BEARER, token)).unwrap(),
         )
         .body(Body::from("User created successfully"))
         .unwrap();
@@ -83,7 +84,7 @@ pub async fn login(
             .status(StatusCode::OK)
             .header(
                 AUTH_TOKEN,
-                HeaderValue::from_str(&format!("Bearer {}", token)).unwrap(),
+                HeaderValue::from_str(&format!("{}{}", BEARER, token)).unwrap(),
             )
             .body(Body::from("Login Success")),
         Ok(false) => response

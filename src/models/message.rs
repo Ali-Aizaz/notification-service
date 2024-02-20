@@ -39,11 +39,3 @@ pub struct LoginUser {
     pub email: String,
     pub password: String,
 }
-
-#[derive(Deserialize, Serialize, sqlx::FromRow, Debug)]
-pub struct Claims {
-    pub name: String,
-    pub email: String,
-    pub password: String,
-    pub exp: usize,
-}
