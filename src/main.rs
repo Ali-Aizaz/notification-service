@@ -1,17 +1,18 @@
 use axum::{
+    middleware,
     routing::{get, post, put},
     Extension, Router,
 };
 
+pub use self::errors::{CustomError, Result};
 use anyhow::Context;
-use controllers::message::{all_messages, new_message, update_message};
-use controllers::user::{login, new_user};
+use controllers::{message, mw_auth, user};
 use sqlx::postgres::PgPoolOptions;
 use std::fs;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
 mod controllers;
+mod ctx;
 mod errors;
 mod models;
 
@@ -40,11 +41,12 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .route("/hello", get(root))
-        .route("/messages", get(all_messages))
-        .route("/messages", post(new_message))
-        .route("/user", post(new_user))
-        .route("/auth/login", post(login))
-        .route("/messages/:id", put(update_message))
+        .route("/messages", get(message::all_messages))
+        .route("/messages", post(message::new_message))
+        .route("/messages/:id", put(message::update_message))
+        .layer(middleware::from_fn(mw_auth::mw_ctx_resolver))
+        .route("/auth/signup", post(user::signup))
+        .route("/auth/login", post(user::login))
         .layer(Extension(pool))
         .layer(TraceLayer::new_for_http());
 

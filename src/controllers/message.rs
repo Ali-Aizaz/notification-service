@@ -5,8 +5,8 @@ use axum::response::IntoResponse;
 use axum::{Extension, Json};
 use sqlx::PgPool;
 
-use crate::errors::CustomError;
 use crate::models::message::{Message, NewMessage, UpdateMessage};
+use crate::{CustomError, Result};
 
 pub async fn all_messages(Extension(pool): Extension<PgPool>) -> impl IntoResponse {
     let sql = "SELECT * FROM message ";
@@ -23,7 +23,7 @@ pub async fn all_messages(Extension(pool): Extension<PgPool>) -> impl IntoRespon
 pub async fn new_message(
     Extension(pool): Extension<PgPool>,
     Json(message): Json<NewMessage>,
-) -> Result<(StatusCode, Json<NewMessage>), CustomError> {
+) -> Result<(StatusCode, Json<NewMessage>)> {
     if message.content.is_empty() || message.user_id < 0 {
         return Err(CustomError::BadRequest);
     }
@@ -44,7 +44,7 @@ pub async fn update_message(
     Extension(pool): Extension<PgPool>,
     Path(id): Path<i32>,
     Json(message): Json<UpdateMessage>,
-) -> Result<(StatusCode, Json<UpdateMessage>), CustomError> {
+) -> Result<(StatusCode, Json<UpdateMessage>)> {
     let sql = "SELECT * FROM message where id=$1";
 
     let _find: Message = sqlx::query_as(&sql)
