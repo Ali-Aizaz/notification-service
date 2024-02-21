@@ -23,13 +23,13 @@ pub async fn signup(
 
     let hashed_password = hash(&user.password, DEFAULT_COST).unwrap();
 
-    let sql = r#"INSERT INTO "user"(name, email, password) values ($1, $2, $3)"#;
+    let sql = r#"INSERT INTO "user"(name, email, password) values ($1, $2, $3) RETURNING id"#;
 
-    sqlx::query(sql)
+    let user_id: (i64,) = sqlx::query_as(sql)
         .bind(&user.name)
         .bind(&user.email)
         .bind(&hashed_password)
-        .execute(&pool)
+        .fetch_one(&pool)
         .await
         .map_err(|op| {
             println!("{:?}", op);
@@ -38,7 +38,7 @@ pub async fn signup(
 
     user.password = hashed_password.to_string();
 
-    let token = create_jwt(&user.email, &user.name, &user.password).unwrap();
+    let token = create_jwt(&user.email, &user.name, &user.password, user_id.0).unwrap();
 
     // Create a response with the JWT in the Authorization header
     let response = response::Response::builder()
@@ -76,6 +76,7 @@ pub async fn login(
         &selected_user.email,
         &selected_user.name,
         &selected_user.password,
+        selected_user.id,
     )
     .unwrap();
 
@@ -98,9 +99,9 @@ pub async fn login(
     Ok(response.unwrap())
 }
 
-pub fn create_jwt(email: &str, name: &str, password: &str) -> Result<String> {
+pub fn create_jwt(email: &str, name: &str, password: &str, user_id: i64) -> Result<String> {
     let expiration = Utc::now()
-        .checked_add_signed(chrono::Duration::seconds(60))
+        .checked_add_signed(chrono::Duration::seconds(2592000)) // 30 Days
         .expect("valid timestamp")
         .timestamp();
 
@@ -109,6 +110,7 @@ pub fn create_jwt(email: &str, name: &str, password: &str) -> Result<String> {
         name: name.to_string(),
         exp: expiration as usize,
         password: password.to_string(),
+        id: user_id,
     };
 
     let header = Header::new(Algorithm::HS512);

@@ -18,7 +18,6 @@ pub struct User {
 #[derive(Deserialize, Serialize, sqlx::FromRow)]
 pub struct NewMessage {
     pub content: String,
-    pub user_id: i64,
 }
 
 #[derive(Deserialize, Serialize, sqlx::FromRow, Debug)]

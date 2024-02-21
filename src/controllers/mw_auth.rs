@@ -1,5 +1,5 @@
 use crate::controllers::AUTH_TOKEN;
-use crate::ctx::{Ctx, Claims};
+use crate::ctx::{Claims, Ctx};
 use crate::{CustomError, Result};
 use axum::body::Body;
 use axum::http::{HeaderMap, HeaderValue, Request};
@@ -52,6 +52,9 @@ fn authorize(headers: &HeaderMap<HeaderValue>) -> Result<Ctx> {
             Ok(Ctx {
                 email: decoded.claims.email,
                 token: jwt,
+                id: decoded.claims.id,
+                name: decoded.claims.name,
+                password: decoded.claims.password,
             })
         }
         Err(e) => Err(e),
