@@ -7,10 +7,11 @@ use axum::{
 pub use self::errors::{CustomError, Result};
 use anyhow::Context;
 use controllers::{message, mw_auth, user};
-use sqlx::postgres::PgPoolOptions;
+use sqlx::postgres::{PgListener, PgPoolOptions};
 use std::fs;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
 mod controllers;
 mod ctx;
 mod errors;
@@ -38,6 +39,7 @@ async fn main() -> anyhow::Result<()> {
         .context("could not connect to database_url")?;
 
     // sqlx::migrate!("./migrations").run(&pool).await?;
+    let listen_task = tokio::spawn(listen_notifications());
 
     let app = Router::new()
         .route("/hello", get(root))
@@ -53,12 +55,31 @@ async fn main() -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
 
     println!("->> LISTENING on {:?}\n", listener);
-
     axum::serve(listener, app).await.unwrap();
+    listen_task.await??;
 
     Ok(())
 }
 
 async fn root() -> &'static str {
     "Hello, World!"
+}
+
+async fn listen_notifications() -> anyhow::Result<()> {
+    // Establish a connection to the database
+    let env = fs::read_to_string(".env").unwrap();
+    let (key, database_url) = env.split_once('=').unwrap();
+
+    assert_eq!(key, "CONNECTION_STRING");
+
+    let mut listener = PgListener::connect(database_url).await?;
+    listener.listen("channel_msg").await?;
+
+    // Continuously receive notifications
+
+    loop {
+        // Ask for the next notification, re-connecting transparently if needed
+        let notification = listener.recv().await?;
+        println!("Received notification: {:?}", notification);
+    }
 }
